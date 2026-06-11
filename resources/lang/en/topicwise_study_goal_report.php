@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'Topicwise Study Goal Report',
+    'header' => 'Topicwise Study Goal Report',
+    'period' => 'Period',
+    'to' => 'to',
+    'all_dates' => 'All dates',
+    'generated' => 'Generated',
+    'col_subject' => 'Subject',
+    'col_topic' => 'Topic',
+    'col_total' => 'Total',
+    'col_pending' => 'Pending',
+    'col_doing' => 'Doing',
+    'col_completed' => 'Completed',
+    'col_member' => 'Member',
+    'col_job_type' => 'Job Type',
+    'col_date_from' => 'Date From',
+    'col_date_to' => 'Date To',
+    'col_extended_date' => 'Extended Date',
+    'col_status' => 'Status',
+    'total_row' => 'Total records',
+    'status_pending' => 'Pending',
+    'status_doing' => 'Doing',
+    'status_completed' => 'Completed',
+];

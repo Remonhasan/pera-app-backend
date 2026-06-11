@@ -1,0 +1,6 @@
+*
+!.gitignore
+!NotoSansBengali-Regular.ttf
+!installed-fonts.json
+!*.ufm
+!*.ttf

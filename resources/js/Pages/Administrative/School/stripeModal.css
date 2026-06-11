@@ -1,0 +1,92 @@
+/* Stripe Connect Modal Styling */
+.stripe-connect-modal .ant-modal-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e9ecef !important;
+    padding: 20px 24px !important;
+}
+
+.stripe-connect-modal .ant-modal-title {
+    color: #262626 !important;
+    font-weight: 600 !important;
+}
+
+.stripe-connect-modal .ant-modal-close {
+    color: #595959 !important;
+    font-size: 18px !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    border-radius: 4px !important;
+    transition: all 0.3s ease !important;
+}
+
+.stripe-connect-modal .ant-modal-close:hover {
+    color: #262626 !important;
+    background-color: #f5f5f5 !important;
+}
+
+.stripe-connect-modal .ant-modal-body {
+    padding: 24px !important;
+    background-color: #ffffff !important;
+}
+
+/* Checkbox Styling - Deep Green */
+.stripe-modal-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #1e3a5f !important;
+    border-color: #1e3a5f !important;
+}
+
+.stripe-modal-checkbox .ant-checkbox-wrapper:hover .ant-checkbox-inner {
+    border-color: #1e3a5f !important;
+}
+
+.stripe-modal-checkbox .ant-checkbox-checked .ant-checkbox-inner::after {
+    border-color: #ffffff !important;
+}
+
+.stripe-modal-checkbox .ant-checkbox-input:focus + .ant-checkbox-inner {
+    border-color: #1e3a5f !important;
+    box-shadow: 0 0 0 2px rgba(4, 76, 66, 0.1) !important;
+}
+
+/* Input Field Styling */
+.stripe-account-input .ant-input {
+    border-radius: 6px !important;
+    border: 1.5px solid #d9d9d9 !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
+}
+
+.stripe-account-input .ant-input:hover {
+    border-color: #1e3a5f !important;
+}
+
+.stripe-account-input .ant-input:focus {
+    border-color: #1e3a5f !important;
+    box-shadow: 0 0 0 2px rgba(4, 76, 66, 0.1) !important;
+}
+
+/* Button Styling - Deep Green */
+.stripe-connect-button {
+    transition: all 0.3s ease !important;
+}
+
+.stripe-connect-button:hover:not(:disabled) {
+    background-color: #162f4d !important;
+    border-color: #162f4d !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(4, 76, 66, 0.3) !important;
+}
+
+.stripe-connect-button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(4, 76, 66, 0.2) !important;
+}
+
+.stripe-connect-button:disabled {
+    background-color: #d9d9d9 !important;
+    border-color: #d9d9d9 !important;
+    color: #ffffff !important;
+    cursor: not-allowed !important;
+}

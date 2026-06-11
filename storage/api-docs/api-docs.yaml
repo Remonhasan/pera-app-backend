@@ -1,0 +1,3004 @@
+openapi: 3.0.0
+info:
+  title: 'Pera Mobile API'
+  description: 'REST API for the Pera mobile application. Supports admin and member authentication via JWT bearer tokens. Admin endpoints require Spatie web-guard permissions (e.g. budget_list, user_create).'
+  version: 1.0.0
+servers:
+  -
+    url: /api
+    description: 'API base path'
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: 'Member login'
+      description: 'Authenticate a member using phone number and password. Returns a JWT bearer token.'
+      operationId: memberLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberLoginRequest'
+      responses:
+        200:
+          description: 'Login successful'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      security: []
+  /admin/login:
+    post:
+      tags:
+        - Authentication
+      summary: 'Admin login'
+      description: 'Authenticate an administrator using email and password. Returns a JWT bearer token with roles and permissions.'
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+      responses:
+        200:
+          description: 'Login successful'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      security: []
+  /me:
+    get:
+      tags:
+        - Authentication
+      summary: 'Get authenticated user'
+      description: 'Returns the current user profile, roles, and permissions.'
+      operationId: getAuthenticatedUser
+      responses:
+        200:
+          description: 'Authenticated user'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AuthUser'
+                type: object
+        401:
+          description: Unauthenticated
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout
+      description: 'Invalidate the current JWT token.'
+      operationId: logout
+      responses:
+        200:
+          description: 'Logout successful'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        401:
+          description: Unauthenticated
+  /dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: 'Member dashboard'
+      description: 'Returns dashboard data for the authenticated member.'
+      operationId: memberDashboard
+      parameters:
+        -
+          name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: 'Dashboard data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /admin/dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: 'Admin dashboard'
+      description: 'Returns admin dashboard widgets based on user permissions.'
+      operationId: adminDashboard
+      parameters:
+        -
+          name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: 'Dashboard data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /members:
+    get:
+      tags:
+        - Members
+      summary: 'List members'
+      description: 'List all members. Available to members and admins with user_list permission.'
+      operationId: listMembers
+      responses:
+        200:
+          description: 'Members list'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /notices:
+    get:
+      tags:
+        - Notices
+      summary: 'List active notices (member)'
+      operationId: listMemberNotices
+      responses:
+        200:
+          description: 'Notices list'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /files/upload:
+    post:
+      tags:
+        - Files
+      summary: 'Upload file'
+      description: 'Upload a file (image, document, etc.). Admin only.'
+      operationId: uploadFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        200:
+          description: 'File uploaded'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /files/delete:
+    post:
+      tags:
+        - Files
+      summary: 'Delete file'
+      operationId: deleteFile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - filePath
+              properties:
+                filePath:
+                  type: string
+                  example: uploads/example.jpg
+              type: object
+      responses:
+        200:
+          description: 'File deleted'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: 'List notifications (paginated)'
+      operationId: listNotifications
+      parameters:
+        -
+          name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        -
+          name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /notifications/page:
+    get:
+      tags:
+        - Notifications
+      summary: 'List all notifications'
+      operationId: listAllNotifications
+      responses:
+        200:
+          description: 'All notifications'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  '/notifications/mark-as-read/{notification}':
+    post:
+      tags:
+        - Notifications
+      summary: 'Mark notification as read'
+      operationId: markNotificationRead
+      parameters:
+        -
+          name: notification
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Marked as read'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /notifications/mark-all-as-read:
+    post:
+      tags:
+        - Notifications
+      summary: 'Mark all notifications as read'
+      operationId: markAllNotificationsRead
+      responses:
+        200:
+          description: 'All marked as read'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: 'Get unread notification count'
+      operationId: notificationUnreadCount
+      responses:
+        200:
+          description: 'Unread count'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/daily-expense:
+    get:
+      tags:
+        - Reports
+      summary: 'Daily expense report'
+      operationId: reportDailyExpense
+      parameters:
+        -
+          name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: expense_type_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: user_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Report data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/daily-expense/export-pdf:
+    get:
+      tags:
+        - Reports
+      summary: 'Export daily expense report as PDF'
+      operationId: reportDailyExpensePdf
+      parameters:
+        -
+          name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: expense_type_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: user_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /reports/expense-track:
+    get:
+      tags:
+        - Reports
+      summary: 'Expense track report'
+      operationId: reportExpenseTrack
+      responses:
+        200:
+          description: 'Report data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/expense-track/export-pdf:
+    get:
+      tags:
+        - Reports
+      summary: 'Export expense track report as PDF'
+      operationId: reportExpenseTrackPdf
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /reports/expense-target:
+    get:
+      tags:
+        - Reports
+      summary: 'Expense target report'
+      operationId: reportExpenseTarget
+      responses:
+        200:
+          description: 'Report data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/expense-target/export-pdf:
+    get:
+      tags:
+        - Reports
+      summary: 'Export expense target report as PDF'
+      operationId: reportExpenseTargetPdf
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /reports/savings:
+    get:
+      tags:
+        - Reports
+      summary: 'Savings report'
+      operationId: reportSavings
+      responses:
+        200:
+          description: 'Report data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/savings/export-pdf:
+    get:
+      tags:
+        - Reports
+      summary: 'Export savings report as PDF'
+      operationId: reportSavingsPdf
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /reports/study:
+    get:
+      tags:
+        - Reports
+      summary: 'Study report'
+      operationId: reportStudy
+      responses:
+        200:
+          description: 'Report data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/study/export-pdf:
+    get:
+      tags:
+        - Reports
+      summary: 'Export study report as PDF'
+      operationId: reportStudyPdf
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /reports/topicwise-study-goal:
+    get:
+      tags:
+        - Reports
+      summary: 'Topicwise study goal report'
+      operationId: reportTopicwiseStudyGoal
+      responses:
+        200:
+          description: 'Report data'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /reports/topicwise-study-goal/export-pdf:
+    get:
+      tags:
+        - Reports
+      summary: 'Export topicwise study goal report as PDF'
+      operationId: reportTopicwiseStudyGoalPdf
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /budget-types:
+    get:
+      tags:
+        - Finance
+      summary: 'List Budget Types'
+      description: 'Requires budget_type_list permission.'
+      operationId: list_budget_types
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Budget Types'
+      description: 'Requires budget_type_create permission.'
+      operationId: create_budget_types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/budget-types/{budget_type}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Budget Types'
+      description: 'Requires budget_type_edit permission.'
+      operationId: update_budget_types
+      parameters:
+        -
+          name: budget_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Budget Types'
+      description: 'Requires budget_type_delete permission.'
+      operationId: delete_budget_types
+      parameters:
+        -
+          name: budget_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /budgets:
+    get:
+      tags:
+        - Finance
+      summary: 'List Budgets'
+      description: 'Requires budget_list permission.'
+      operationId: list_budgets
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Budgets'
+      description: 'Requires budget_create permission.'
+      operationId: create_budgets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/budgets/{budget}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Budgets'
+      description: 'Requires budget_edit permission.'
+      operationId: update_budgets
+      parameters:
+        -
+          name: budget
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Budgets'
+      description: 'Requires budget_delete permission.'
+      operationId: delete_budgets
+      parameters:
+        -
+          name: budget
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /expense-targets:
+    get:
+      tags:
+        - Finance
+      summary: 'List Expense Targets'
+      description: 'Requires expense_target_list permission.'
+      operationId: list_expense_targets
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Expense Targets'
+      description: 'Requires expense_target_create permission.'
+      operationId: create_expense_targets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/expense-targets/{expense_target}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Expense Targets'
+      description: 'Requires expense_target_edit permission.'
+      operationId: update_expense_targets
+      parameters:
+        -
+          name: expense_target
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Expense Targets'
+      description: 'Requires expense_target_delete permission.'
+      operationId: delete_expense_targets
+      parameters:
+        -
+          name: expense_target
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /expense-types:
+    get:
+      tags:
+        - Finance
+      summary: 'List Expense Types'
+      description: 'Requires expense_type_list permission.'
+      operationId: list_expense_types
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Expense Types'
+      description: 'Requires expense_type_create permission.'
+      operationId: create_expense_types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/expense-types/{expense_type}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Expense Types'
+      description: 'Requires expense_type_edit permission.'
+      operationId: update_expense_types
+      parameters:
+        -
+          name: expense_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Expense Types'
+      description: 'Requires expense_type_delete permission.'
+      operationId: delete_expense_types
+      parameters:
+        -
+          name: expense_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /expenses:
+    get:
+      tags:
+        - Finance
+      summary: 'List Expenses'
+      description: 'Requires expense_list permission.'
+      operationId: list_expenses
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Expenses'
+      description: 'Requires expense_create permission.'
+      operationId: create_expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/expenses/{expense}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Expenses'
+      description: 'Requires expense_edit permission.'
+      operationId: update_expenses
+      parameters:
+        -
+          name: expense
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Expenses'
+      description: 'Requires expense_delete permission.'
+      operationId: delete_expenses
+      parameters:
+        -
+          name: expense
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /banks:
+    get:
+      tags:
+        - Finance
+      summary: 'List Banks'
+      description: 'Requires bank_list permission.'
+      operationId: list_banks
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Banks'
+      description: 'Requires bank_create permission.'
+      operationId: create_banks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/banks/{bank}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Banks'
+      description: 'Requires bank_edit permission.'
+      operationId: update_banks
+      parameters:
+        -
+          name: bank
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Banks'
+      description: 'Requires bank_delete permission.'
+      operationId: delete_banks
+      parameters:
+        -
+          name: bank
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /saving-types:
+    get:
+      tags:
+        - Finance
+      summary: 'List Saving Types'
+      description: 'Requires saving_type_list permission.'
+      operationId: list_saving_types
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Saving Types'
+      description: 'Requires saving_type_create permission.'
+      operationId: create_saving_types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/saving-types/{saving_type}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Saving Types'
+      description: 'Requires saving_type_edit permission.'
+      operationId: update_saving_types
+      parameters:
+        -
+          name: saving_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Saving Types'
+      description: 'Requires saving_type_delete permission.'
+      operationId: delete_saving_types
+      parameters:
+        -
+          name: saving_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /savings:
+    get:
+      tags:
+        - Finance
+      summary: 'List Savings'
+      description: 'Requires saving_list permission.'
+      operationId: list_savings
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Savings'
+      description: 'Requires saving_create permission.'
+      operationId: create_savings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/savings/{saving}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Savings'
+      description: 'Requires saving_edit permission.'
+      operationId: update_savings
+      parameters:
+        -
+          name: saving
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Savings'
+      description: 'Requires saving_delete permission.'
+      operationId: delete_savings
+      parameters:
+        -
+          name: saving
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /withdraws:
+    get:
+      tags:
+        - Finance
+      summary: 'List Withdraws'
+      description: 'Requires withdraw_list permission.'
+      operationId: list_withdraws
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Withdraws'
+      description: 'Requires withdraw_create permission.'
+      operationId: create_withdraws
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/withdraws/{withdraw}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Withdraws'
+      description: 'Requires withdraw_edit permission.'
+      operationId: update_withdraws
+      parameters:
+        -
+          name: withdraw
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Withdraws'
+      description: 'Requires withdraw_delete permission.'
+      operationId: delete_withdraws
+      parameters:
+        -
+          name: withdraw
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /goals:
+    get:
+      tags:
+        - Finance
+      summary: 'List Goals'
+      description: 'Requires goal_list permission.'
+      operationId: list_goals
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Finance
+      summary: 'Create Goals'
+      description: 'Requires goal_create permission.'
+      operationId: create_goals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/goals/{goal}':
+    put:
+      tags:
+        - Finance
+      summary: 'Update Goals'
+      description: 'Requires goal_edit permission.'
+      operationId: update_goals
+      parameters:
+        -
+          name: goal
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Finance
+      summary: 'Delete Goals'
+      description: 'Requires goal_delete permission.'
+      operationId: delete_goals
+      parameters:
+        -
+          name: goal
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /job-types:
+    get:
+      tags:
+        - Study
+      summary: 'List Job Types'
+      description: 'Requires job_type_list permission.'
+      operationId: list_job_types
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Study
+      summary: 'Create Job Types'
+      description: 'Requires job_type_create permission.'
+      operationId: create_job_types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/job-types/{job_type}':
+    put:
+      tags:
+        - Study
+      summary: 'Update Job Types'
+      description: 'Requires job_type_edit permission.'
+      operationId: update_job_types
+      parameters:
+        -
+          name: job_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Study
+      summary: 'Delete Job Types'
+      description: 'Requires job_type_delete permission.'
+      operationId: delete_job_types
+      parameters:
+        -
+          name: job_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /subjects:
+    get:
+      tags:
+        - Study
+      summary: 'List Subjects'
+      description: 'Requires subject_list permission.'
+      operationId: list_subjects
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Study
+      summary: 'Create Subjects'
+      description: 'Requires subject_create permission.'
+      operationId: create_subjects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/subjects/{subject}':
+    put:
+      tags:
+        - Study
+      summary: 'Update Subjects'
+      description: 'Requires subject_edit permission.'
+      operationId: update_subjects
+      parameters:
+        -
+          name: subject
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Study
+      summary: 'Delete Subjects'
+      description: 'Requires subject_delete permission.'
+      operationId: delete_subjects
+      parameters:
+        -
+          name: subject
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /topics:
+    get:
+      tags:
+        - Study
+      summary: 'List Topics'
+      description: 'Requires topic_list permission.'
+      operationId: list_topics
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Study
+      summary: 'Create Topics'
+      description: 'Requires topic_create permission.'
+      operationId: create_topics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/topics/{topic}':
+    put:
+      tags:
+        - Study
+      summary: 'Update Topics'
+      description: 'Requires topic_edit permission.'
+      operationId: update_topics
+      parameters:
+        -
+          name: topic
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Study
+      summary: 'Delete Topics'
+      description: 'Requires topic_delete permission.'
+      operationId: delete_topics
+      parameters:
+        -
+          name: topic
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /notes:
+    get:
+      tags:
+        - Study
+      summary: 'List Notes'
+      description: 'Requires note_list permission.'
+      operationId: list_notes
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Study
+      summary: 'Create Notes'
+      description: 'Requires note_create permission.'
+      operationId: create_notes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/notes/{note}':
+    put:
+      tags:
+        - Study
+      summary: 'Update Notes'
+      description: 'Requires note_edit permission.'
+      operationId: update_notes
+      parameters:
+        -
+          name: note
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Study
+      summary: 'Delete Notes'
+      description: 'Requires note_delete permission.'
+      operationId: delete_notes
+      parameters:
+        -
+          name: note
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /study-goals:
+    get:
+      tags:
+        - Study
+      summary: 'List Study Goals'
+      description: 'Requires study_goal_list permission.'
+      operationId: list_study_goals
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Study
+      summary: 'Create Study Goals'
+      description: 'Requires study_goal_create permission.'
+      operationId: create_study_goals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/study-goals/{study_goal}':
+    put:
+      tags:
+        - Study
+      summary: 'Update Study Goals'
+      description: 'Requires study_goal_edit permission.'
+      operationId: update_study_goals
+      parameters:
+        -
+          name: study_goal
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Study
+      summary: 'Delete Study Goals'
+      description: 'Requires study_goal_delete permission.'
+      operationId: delete_study_goals
+      parameters:
+        -
+          name: study_goal
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /exams:
+    get:
+      tags:
+        - Study
+      summary: 'List Exams'
+      description: 'Requires exam_list permission.'
+      operationId: list_exams
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Study
+      summary: 'Create Exams'
+      description: 'Requires exam_create permission.'
+      operationId: create_exams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/exams/{exam}':
+    put:
+      tags:
+        - Study
+      summary: 'Update Exams'
+      description: 'Requires exam_edit permission.'
+      operationId: update_exams
+      parameters:
+        -
+          name: exam
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Study
+      summary: 'Delete Exams'
+      description: 'Requires exam_delete permission.'
+      operationId: delete_exams
+      parameters:
+        -
+          name: exam
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /task-types:
+    get:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'List Task Types'
+      description: 'Requires task_type_list permission.'
+      operationId: list_task_types
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Create Task Types'
+      description: 'Requires task_type_create permission.'
+      operationId: create_task_types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/task-types/{task_type}':
+    put:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Update Task Types'
+      description: 'Requires task_type_edit permission.'
+      operationId: update_task_types
+      parameters:
+        -
+          name: task_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Delete Task Types'
+      description: 'Requires task_type_delete permission.'
+      operationId: delete_task_types
+      parameters:
+        -
+          name: task_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /tasks:
+    get:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'List Tasks'
+      description: 'Requires task_list permission.'
+      operationId: list_tasks
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Create Tasks'
+      description: 'Requires task_create permission.'
+      operationId: create_tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/tasks/{task}':
+    put:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Update Tasks'
+      description: 'Requires task_edit permission.'
+      operationId: update_tasks
+      parameters:
+        -
+          name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Delete Tasks'
+      description: 'Requires task_delete permission.'
+      operationId: delete_tasks
+      parameters:
+        -
+          name: task
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /habit-types:
+    get:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'List Habit Types'
+      description: 'Requires habit_type_list permission.'
+      operationId: list_habit_types
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Create Habit Types'
+      description: 'Requires habit_type_create permission.'
+      operationId: create_habit_types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/habit-types/{habit_type}':
+    put:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Update Habit Types'
+      description: 'Requires habit_type_edit permission.'
+      operationId: update_habit_types
+      parameters:
+        -
+          name: habit_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Delete Habit Types'
+      description: 'Requires habit_type_delete permission.'
+      operationId: delete_habit_types
+      parameters:
+        -
+          name: habit_type
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /habits:
+    get:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'List Habits'
+      description: 'Requires habit_list permission.'
+      operationId: list_habits
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Create Habits'
+      description: 'Requires habit_create permission.'
+      operationId: create_habits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/habits/{habit}':
+    put:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Update Habits'
+      description: 'Requires habit_edit permission.'
+      operationId: update_habits
+      parameters:
+        -
+          name: habit
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - 'Tasks & Habits'
+      summary: 'Delete Habits'
+      description: 'Requires habit_delete permission.'
+      operationId: delete_habits
+      parameters:
+        -
+          name: habit
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  /admin-notices:
+    get:
+      tags:
+        - Notices
+      summary: 'List Admin Notices'
+      description: 'Requires notice_list permission.'
+      operationId: list_admin_notices
+      responses:
+        200:
+          description: 'List retrieved'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    post:
+      tags:
+        - Notices
+      summary: 'Create Admin Notices'
+      description: 'Requires notice_create permission.'
+      operationId: create_admin_notices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/admin-notices/{notice}':
+    put:
+      tags:
+        - Notices
+      summary: 'Update Admin Notices'
+      description: 'Requires notice_edit permission.'
+      operationId: update_admin_notices
+      parameters:
+        -
+          name: notice
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+    delete:
+      tags:
+        - Notices
+      summary: 'Delete Admin Notices'
+      description: 'Requires notice_delete permission.'
+      operationId: delete_admin_notices
+      parameters:
+        -
+          name: notice
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+        403:
+          description: Forbidden
+  '/expenses/{expense}/image':
+    get:
+      tags:
+        - Finance
+      summary: 'Get expense image'
+      operationId: expenseImage
+      parameters:
+        -
+          name: expense
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Image file'
+          content:
+            'image/*':
+              schema:
+                type: string
+                format: binary
+  '/savings/{saving}/image':
+    get:
+      tags:
+        - Finance
+      summary: 'Get saving image'
+      operationId: savingImage
+      parameters:
+        -
+          name: saving
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Image file'
+          content:
+            'image/*':
+              schema:
+                type: string
+                format: binary
+  '/withdraws/{withdraw}/image':
+    get:
+      tags:
+        - Finance
+      summary: 'Get withdraw image'
+      operationId: withdrawImage
+      parameters:
+        -
+          name: withdraw
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Image file'
+          content:
+            'image/*':
+              schema:
+                type: string
+                format: binary
+  '/notes/{note}/file':
+    get:
+      tags:
+        - Study
+      summary: 'Get note file'
+      operationId: noteFile
+      parameters:
+        -
+          name: note
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: path
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: File
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  '/exams/{exam}/file':
+    get:
+      tags:
+        - Study
+      summary: 'Get exam file'
+      operationId: examFile
+      parameters:
+        -
+          name: exam
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: path
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: File
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /study-goals/export-pdf:
+    get:
+      tags:
+        - Study
+      summary: 'Export study goals as PDF'
+      operationId: studyGoalsExportPdf
+      parameters:
+        -
+          name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: user_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: subject_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: topic_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: job_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: goal_status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - doing
+              - completed
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /exams/export-pdf:
+    get:
+      tags:
+        - Study
+      summary: 'Export exams as PDF'
+      operationId: examsExportPdf
+      parameters:
+        -
+          name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        -
+          name: job_type_id
+          in: query
+          schema:
+            type: integer
+        -
+          name: exam_status
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'PDF file'
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /users:
+    get:
+      tags:
+        - 'Users & Access'
+      summary: 'List users'
+      operationId: listUsers
+      responses:
+        200:
+          description: 'Users and role options'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    post:
+      tags:
+        - 'Users & Access'
+      summary: 'Create user'
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  '/users/{user}':
+    get:
+      tags:
+        - 'Users & Access'
+      summary: 'Get user'
+      operationId: showUser
+      parameters:
+        -
+          name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'User details'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    put:
+      tags:
+        - 'Users & Access'
+      summary: 'Update user'
+      operationId: updateUser
+      parameters:
+        -
+          name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    delete:
+      tags:
+        - 'Users & Access'
+      summary: 'Delete user'
+      operationId: deleteUser
+      parameters:
+        -
+          name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  '/users/{user}/status':
+    post:
+      tags:
+        - 'Users & Access'
+      summary: 'Update user status'
+      operationId: updateUserStatus
+      parameters:
+        -
+          name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - status
+              properties:
+                status:
+                  type: integer
+                  enum:
+                    - 0
+                    - 1
+              type: object
+      responses:
+        200:
+          description: 'Status updated'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /roles:
+    get:
+      tags:
+        - 'Users & Access'
+      summary: 'List roles'
+      operationId: listRoles
+      responses:
+        200:
+          description: 'Roles and permissions'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    post:
+      tags:
+        - 'Users & Access'
+      summary: 'Create role'
+      operationId: createRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  '/roles/{role}':
+    put:
+      tags:
+        - 'Users & Access'
+      summary: 'Update role'
+      operationId: updateRole
+      parameters:
+        -
+          name: role
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    delete:
+      tags:
+        - 'Users & Access'
+      summary: 'Delete role'
+      operationId: deleteRole
+      parameters:
+        -
+          name: role
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  /permissions:
+    get:
+      tags:
+        - 'Users & Access'
+      summary: 'List permissions'
+      operationId: listPermissions
+      responses:
+        200:
+          description: 'Permissions list'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    post:
+      tags:
+        - 'Users & Access'
+      summary: 'Create permission'
+      operationId: createPermission
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+  '/permissions/{permission}':
+    put:
+      tags:
+        - 'Users & Access'
+      summary: 'Update permission'
+      operationId: updatePermission
+      parameters:
+        -
+          name: permission
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+    delete:
+      tags:
+        - 'Users & Access'
+      summary: 'Delete permission'
+      operationId: deletePermission
+      parameters:
+        -
+          name: permission
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiSuccessResponse'
+components:
+  schemas:
+    ApiSuccessResponse:
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Success
+        data:
+          type: object
+          nullable: true
+      type: object
+    ApiErrorResponse:
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: 'An error occurred'
+        errors:
+          type: object
+          nullable: true
+      type: object
+    MemberLoginRequest:
+      required:
+        - phone
+        - password
+      properties:
+        phone:
+          type: string
+          example: '01712345678'
+        password:
+          type: string
+          format: password
+          example: Abc1234!
+      type: object
+    AdminLoginRequest:
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@gmail.com
+        password:
+          type: string
+          format: password
+          example: Abc1234!
+      type: object
+    LoginResponse:
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Login successful.'
+        data:
+          properties:
+            token:
+              type: string
+            token_type:
+              type: string
+              example: bearer
+            expires_in:
+              type: integer
+              example: 3600
+            user:
+              $ref: '#/components/schemas/AuthUser'
+          type: object
+      type: object
+    AuthUser:
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'John Doe'
+        phone:
+          type: string
+          example: '01712345678'
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        status:
+          type: boolean
+          example: true
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        account_type:
+          type: string
+          example: admin
+          enum:
+            - admin
+            - member
+        roles:
+          type: array
+          items:
+            properties:
+              name:
+                type: string
+              guard_name:
+                type: string
+              label:
+                type: string
+                nullable: true
+            type: object
+        permissions:
+          type: array
+          items:
+            type: string
+          example:
+            - budget_list
+            - user_create
+      type: object
+    DateRangeFilters:
+      properties:
+        date_from:
+          type: string
+          format: date
+          nullable: true
+        date_to:
+          type: string
+          format: date
+          nullable: true
+      type: object
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: 'JWT token from POST /api/login or POST /api/admin/login. Format: Bearer {token}'
+      bearerFormat: JWT
+      scheme: bearer
+security:
+  -
+    bearerAuth: []
+tags:
+  -
+    name: Authentication
+    description: 'Login, logout, and current user'
+  -
+    name: Dashboard
+    description: 'Admin and member dashboards'
+  -
+    name: 'Users & Access'
+    description: 'Users, roles, and permissions'
+  -
+    name: Finance
+    description: 'Budgets, expenses, savings, and goals'
+  -
+    name: Study
+    description: 'Subjects, topics, notes, study goals, and exams'
+  -
+    name: 'Tasks & Habits'
+    description: 'Task and habit management'
+  -
+    name: Notices
+    description: 'Member notices and admin notice management'
+  -
+    name: Reports
+    description: 'Administrative reports and PDF exports'
+  -
+    name: Notifications
+    description: 'In-app notifications'
+  -
+    name: Files
+    description: 'File upload and delete'
+  -
+    name: Members
+    description: 'Member list for mobile'

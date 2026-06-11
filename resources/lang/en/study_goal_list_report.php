@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'title' => 'Study Goal List',
+    'header' => 'Study Goal List',
+    'period' => 'Period',
+    'to' => 'to',
+    'all_dates' => 'All dates',
+    'generated' => 'Generated',
+    'col_member' => 'Member',
+    'col_subject' => 'Subject',
+    'col_topic' => 'Topic',
+    'col_job_type' => 'Job Type',
+    'col_date_from' => 'Date From',
+    'col_date_to' => 'Date To',
+    'col_extended_date' => 'Extended Date',
+    'col_study_goal_status' => 'Study Goal Status',
+    'col_status' => 'Status',
+    'total_row' => 'Total records',
+    'status_active' => 'Active',
+    'status_inactive' => 'Inactive',
+    'goal_status_pending' => 'Pending',
+    'goal_status_doing' => 'Doing',
+    'goal_status_completed' => 'Completed',
+];
