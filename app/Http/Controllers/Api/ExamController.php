@@ -42,6 +42,16 @@ class ExamController extends Controller
         ], 'Exam list retrieved successfully.');
     }
 
+    public function show(Exam $exam): JsonResponse
+    {
+        $this->authorizeApiPermission('exam_list');
+
+        return $this->successResponse(
+            $this->examService->getExam($exam),
+            'Exam retrieved successfully.',
+        );
+    }
+
     public function store(StoreExamRequest $request): JsonResponse
     {
         $this->authorizeApiPermission('exam_create');

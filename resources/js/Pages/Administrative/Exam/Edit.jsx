@@ -171,24 +171,30 @@ export default function Edit({ exam, jobTypes }) {
             data.application_file instanceof File ||
             data.admit_card_file instanceof File ||
             (data.images || []).some((f) => f instanceof File);
+        const hasFileRemovals =
+            (exam.application_file && !data.keep_application_file) ||
+            (exam.admit_card_file && !data.keep_admit_card_file) ||
+            JSON.stringify(data.keep_images ?? []) !==
+                JSON.stringify(exam.images ?? []);
+        const useFormData = hasNewUploads || hasFileRemovals;
 
         transform((formData) => {
             const out = { ...formData };
-            if (hasNewUploads) {
+            if (useFormData) {
                 out._method = "put";
             }
             return out;
         });
 
         const visitOptions = {
-            forceFormData: hasNewUploads,
+            forceFormData: useFormData,
             preserveScroll: true,
             onSuccess: () => setOpen(false),
             onFinish: () => transform((d) => d),
         };
 
         const url = route("administrative.exam.update", exam.id);
-        if (hasNewUploads) {
+        if (useFormData) {
             post(url, visitOptions);
         } else {
             put(url, visitOptions);
@@ -402,8 +408,8 @@ export default function Edit({ exam, jobTypes }) {
                                             ...prev,
                                             application_file: file,
                                             keep_application_file: file
-                                                ? prev.keep_application_file
-                                                : extractKeptPaths(fileList)[0] ?? "",
+                                                ? null
+                                                : extractKeptPaths(fileList)[0] ?? null,
                                         }));
                                     }}
                                 >
@@ -430,8 +436,8 @@ export default function Edit({ exam, jobTypes }) {
                                             ...prev,
                                             admit_card_file: file,
                                             keep_admit_card_file: file
-                                                ? prev.keep_admit_card_file
-                                                : extractKeptPaths(fileList)[0] ?? "",
+                                                ? null
+                                                : extractKeptPaths(fileList)[0] ?? null,
                                         }));
                                     }}
                                 >

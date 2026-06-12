@@ -24,13 +24,13 @@ class DashboardService
     {
         $data = [];
 
-        if ($user->can('budget_list')) {
+        if ($this->userCan($user, 'budget_list')) {
             $data['budget'] = [
                 'amount' => $this->sumInDateRange(Budget::query(), 'date', $dateFrom, $dateTo, 'amount'),
             ];
         }
 
-        if ($user->can('expense_list')) {
+        if ($this->userCan($user, 'expense_list')) {
             $data['expense'] = [
                 'amount' => $this->sumInDateRange(Expense::query(), 'date', $dateFrom, $dateTo, 'amount'),
                 'trend' => $this->dailyAmountTrend(
@@ -44,17 +44,17 @@ class DashboardService
         }
 
         $savings = [];
-        if ($user->can('saving_list')) {
+        if ($this->userCan($user, 'saving_list')) {
             $savings['saved'] = $this->sumInDateRange(Saving::query(), 'date', $dateFrom, $dateTo, 'amount');
         }
-        if ($user->can('withdraw_list')) {
+        if ($this->userCan($user, 'withdraw_list')) {
             $savings['withdrawn'] = $this->sumInDateRange(Withdraw::query(), 'date', $dateFrom, $dateTo, 'amount');
         }
         if ($savings !== []) {
             $data['savings'] = $savings;
         }
 
-        if ($user->can('goal_list')) {
+        if ($this->userCan($user, 'goal_list')) {
             $goalsQuery = Goal::query()->where(function (Builder $query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('start_date', [$dateFrom, $dateTo])
                     ->orWhereBetween('end_date', [$dateFrom, $dateTo])
@@ -77,13 +77,13 @@ class DashboardService
         }
 
         $study = [];
-        if ($user->can('note_list')) {
+        if ($this->userCan($user, 'note_list')) {
             $study['notes'] = Note::query()
                 ->whereDate('created_at', '>=', $dateFrom)
                 ->whereDate('created_at', '<=', $dateTo)
                 ->count();
         }
-        if ($user->can('study_goal_list')) {
+        if ($this->userCan($user, 'study_goal_list')) {
             $study['studyGoals'] = StudyGoal::query()
                 ->where(function (Builder $query) use ($dateFrom, $dateTo) {
                     $query->whereBetween('date_from', [$dateFrom, $dateTo])
@@ -102,7 +102,7 @@ class DashboardService
             $data['study'] = $study;
         }
 
-        if ($user->can('task_list')) {
+        if ($this->userCan($user, 'task_list')) {
             $tasksQuery = Task::query()
                 ->whereDate('created_at', '>=', $dateFrom)
                 ->whereDate('created_at', '<=', $dateTo);
@@ -114,7 +114,7 @@ class DashboardService
             ];
         }
 
-        if ($user->can('habit_list')) {
+        if ($this->userCan($user, 'habit_list')) {
             $data['habits'] = [
                 'total' => Habit::query()
                     ->whereDate('created_at', '>=', $dateFrom)
@@ -124,6 +124,11 @@ class DashboardService
         }
 
         return $data;
+    }
+
+    private function userCan(User $user, string $permission): bool
+    {
+        return $user->hasPermissionTo($permission, User::ADMIN_GUARD);
     }
 
     private function sumInDateRange(

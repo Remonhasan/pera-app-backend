@@ -79,12 +79,12 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('subjects', SubjectController::class)->except(['show']);
     Route::apiResource('topics', TopicController::class)->except(['show']);
     Route::get('notes/{note}/file', [NoteController::class, 'file'])->name('api.notes.file');
-    Route::apiResource('notes', NoteController::class)->except(['show']);
+    Route::apiResource('notes', NoteController::class);
     Route::get('study-goals/export-pdf', [StudyGoalController::class, 'exportPdf'])->name('api.study-goals.export-pdf');
     Route::apiResource('study-goals', StudyGoalController::class)->except(['show']);
     Route::get('exams/export-pdf', [ExamController::class, 'exportPdf'])->name('api.exams.export-pdf');
     Route::get('exams/{exam}/file', [ExamController::class, 'file'])->name('api.exams.file');
-    Route::apiResource('exams', ExamController::class)->except(['show']);
+    Route::apiResource('exams', ExamController::class);
     Route::apiResource('task-types', TaskTypeController::class)->except(['show']);
     Route::apiResource('tasks', TaskController::class)->except(['show']);
     Route::apiResource('habit-types', HabitTypeController::class)->except(['show']);

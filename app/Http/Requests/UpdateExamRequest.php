@@ -35,6 +35,12 @@ class UpdateExamRequest extends FormRequest
             $merge['keep_images'] = $this->normalizeArrayInput('keep_images');
         }
 
+        foreach (['keep_application_file', 'keep_admit_card_file'] as $key) {
+            if ($this->has($key) && $this->input($key) === '') {
+                $merge[$key] = null;
+            }
+        }
+
         if ($merge !== []) {
             $this->merge($merge);
         }

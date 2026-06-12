@@ -20,6 +20,15 @@ class EloquentExamRepository implements ExamRepositoryInterface
             ->get();
     }
 
+    public function findWithRelations(Exam $exam): Exam
+    {
+        return $exam->load([
+            'jobType:id,name',
+            'creator:id,name',
+            'updater:id,name',
+        ]);
+    }
+
     public function create(array $attributes): Exam
     {
         return Exam::create($attributes);

@@ -45,6 +45,16 @@ class NoteController extends Controller
         ], 'Note list retrieved successfully.');
     }
 
+    public function show(Note $note): JsonResponse
+    {
+        $this->authorizeApiPermission('note_list');
+
+        return $this->successResponse(
+            $this->noteService->getNote($note),
+            'Note retrieved successfully.',
+        );
+    }
+
     public function store(StoreNoteRequest $request): JsonResponse
     {
         $this->authorizeApiPermission('note_create');

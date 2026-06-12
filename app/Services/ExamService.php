@@ -17,6 +17,11 @@ class ExamService
         return $this->exams->allWithRelations();
     }
 
+    public function getExam(Exam $exam): Exam
+    {
+        return $this->exams->findWithRelations($exam);
+    }
+
     /** @param  array<string, mixed>  $filters */
     public function buildListExport(array $filters): array
     {
@@ -166,16 +171,24 @@ class ExamService
         }
 
         if (array_key_exists('keep_application_file', $validated) || $applicationFile !== null) {
+            $keepPath = array_key_exists('keep_application_file', $validated)
+                ? $validated['keep_application_file']
+                : $exam->application_file;
+
             $payload['application_file'] = $this->resolveSingleFile(
-                $validated['keep_application_file'] ?? $exam->application_file,
+                $keepPath,
                 $applicationFile,
                 $exam->application_file,
             );
         }
 
         if (array_key_exists('keep_admit_card_file', $validated) || $admitCardFile !== null) {
+            $keepPath = array_key_exists('keep_admit_card_file', $validated)
+                ? $validated['keep_admit_card_file']
+                : $exam->admit_card_file;
+
             $payload['admit_card_file'] = $this->resolveSingleFile(
-                $validated['keep_admit_card_file'] ?? $exam->admit_card_file,
+                $keepPath,
                 $admitCardFile,
                 $exam->admit_card_file,
             );

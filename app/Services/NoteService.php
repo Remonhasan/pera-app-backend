@@ -16,22 +16,18 @@ class NoteService
 
     public function listNotes(): Collection
     {
-        $notes = $this->notes->allWithRelations();
-        $jobTypeMap = JobType::query()
-            ->get(['id', 'name'])
-            ->keyBy('id');
+        $jobTypeMap = $this->jobTypeMap();
 
-        return $notes->map(function (Note $note) use ($jobTypeMap) {
-            $jobNames = collect($note->job_ids ?? [])
-                ->map(fn ($id) => $jobTypeMap->get((int) $id)?->name)
-                ->filter()
-                ->values()
-                ->all();
+        return $this->notes->allWithRelations()
+            ->map(fn (Note $note) => $this->enrichNote($note, $jobTypeMap));
+    }
 
-            $note->setAttribute('job_type_names', $jobNames);
-
-            return $note;
-        });
+    public function getNote(Note $note): Note
+    {
+        return $this->enrichNote(
+            $this->notes->findWithRelations($note),
+            $this->jobTypeMap(),
+        );
     }
 
     /** @return list<array{id: int, name: string, phone: string|null}> */
@@ -144,6 +140,28 @@ class NoteService
         $this->deleteStoredPaths($note->files ?? []);
 
         return $this->notes->delete($note);
+    }
+
+    /** @return Collection<int, JobType> */
+    private function jobTypeMap(): Collection
+    {
+        return JobType::query()
+            ->get(['id', 'name'])
+            ->keyBy('id');
+    }
+
+    /** @param  Collection<int, JobType>  $jobTypeMap */
+    private function enrichNote(Note $note, Collection $jobTypeMap): Note
+    {
+        $jobNames = collect($note->job_ids ?? [])
+            ->map(fn ($id) => $jobTypeMap->get((int) $id)?->name)
+            ->filter()
+            ->values()
+            ->all();
+
+        $note->setAttribute('job_type_names', $jobNames);
+
+        return $note;
     }
 
     /** @param  mixed  $jobIds */

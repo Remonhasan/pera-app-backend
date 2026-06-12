@@ -9,6 +9,8 @@ interface NoteRepositoryInterface
 {
     public function allWithRelations(): Collection;
 
+    public function findWithRelations(Note $note): Note;
+
     public function create(array $attributes): Note;
 
     public function update(Note $note, array $attributes): bool;

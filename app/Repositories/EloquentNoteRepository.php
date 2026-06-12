@@ -22,6 +22,17 @@ class EloquentNoteRepository implements NoteRepositoryInterface
             ->get();
     }
 
+    public function findWithRelations(Note $note): Note
+    {
+        return $note->load([
+            'user:id,name,phone',
+            'subject:id,name',
+            'topic:id,topic,subject_id',
+            'creator:id,name',
+            'updater:id,name',
+        ]);
+    }
+
     public function create(array $attributes): Note
     {
         return Note::create($attributes);
