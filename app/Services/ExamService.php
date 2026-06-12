@@ -195,8 +195,12 @@ class ExamService
         }
 
         if (array_key_exists('keep_images', $validated) || $imageFiles !== []) {
+            $keepPaths = array_key_exists('keep_images', $validated)
+                ? $validated['keep_images']
+                : ($exam->images ?? []);
+
             $payload['images'] = $this->mergeStoredFiles(
-                $validated['keep_images'] ?? [],
+                $keepPaths,
                 $imageFiles,
                 $exam->images ?? [],
             );
@@ -265,10 +269,15 @@ class ExamService
      */
     private function mergeStoredFiles(array $keepPaths, array $newFiles, array $previousPaths): ?array
     {
-        $removed = array_diff($previousPaths, $keepPaths);
+        $normalizedKeepPaths = array_values(array_filter(array_map(
+            fn ($path) => $this->normalizeStoredPath($path),
+            $keepPaths,
+        )));
+
+        $removed = array_diff($previousPaths, $normalizedKeepPaths);
         $this->deleteStoredPaths(array_values($removed));
 
-        $paths = array_values(array_filter($keepPaths, fn ($path) => is_string($path) && $path !== ''));
+        $paths = $normalizedKeepPaths;
 
         foreach ($newFiles as $file) {
             if ($file instanceof UploadedFile) {
@@ -277,6 +286,24 @@ class ExamService
         }
 
         return $paths === [] ? null : $paths;
+    }
+
+    private function normalizeStoredPath(mixed $path): ?string
+    {
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        if (str_contains($path, 'path=')) {
+            $query = [];
+            parse_str((string) parse_url($path, PHP_URL_QUERY), $query);
+
+            if (! empty($query['path']) && is_string($query['path'])) {
+                return $query['path'];
+            }
+        }
+
+        return $path;
     }
 
     private function deleteStoredPath(?string $path): void

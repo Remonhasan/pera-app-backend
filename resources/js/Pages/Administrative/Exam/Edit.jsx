@@ -92,6 +92,13 @@ function extractKeptPaths(fileList) {
             if (file?.path) return file.path;
             const url = file?.url || file?.thumbUrl;
             if (!url) return null;
+            try {
+                const parsed = new URL(url, window.location.origin);
+                const pathParam = parsed.searchParams.get("path");
+                if (pathParam) return pathParam;
+            } catch {
+                // ignore invalid URLs
+            }
             return url
                 .replace(/^\/storage\//, "")
                 .replace(/^https?:\/\/[^/]+\/storage\//, "");
@@ -167,21 +174,29 @@ export default function Edit({ exam, jobTypes }) {
             return;
         }
 
+        const hasNewImageUploads = (data.images || []).some(
+            (f) => f instanceof File,
+        );
         const hasNewUploads =
             data.application_file instanceof File ||
             data.admit_card_file instanceof File ||
-            (data.images || []).some((f) => f instanceof File);
-        const hasFileRemovals =
+            hasNewImageUploads;
+        const hasPdfRemovals =
             (exam.application_file && !data.keep_application_file) ||
-            (exam.admit_card_file && !data.keep_admit_card_file) ||
+            (exam.admit_card_file && !data.keep_admit_card_file);
+        const hasImageChanges =
             JSON.stringify(data.keep_images ?? []) !==
-                JSON.stringify(exam.images ?? []);
-        const useFormData = hasNewUploads || hasFileRemovals;
+            JSON.stringify(exam.images ?? []);
+        const useFormData = hasNewUploads || hasPdfRemovals;
 
         transform((formData) => {
             const out = { ...formData };
             if (useFormData) {
                 out._method = "put";
+                if (hasImageChanges || hasNewImageUploads) {
+                    out.keep_images_updated = true;
+                    out.keep_images = formData.keep_images ?? [];
+                }
             }
             return out;
         });

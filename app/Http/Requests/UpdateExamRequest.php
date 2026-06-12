@@ -31,7 +31,7 @@ class UpdateExamRequest extends FormRequest
             }
         }
 
-        if ($this->has('keep_images')) {
+        if ($this->boolean('keep_images_updated') || $this->has('keep_images')) {
             $merge['keep_images'] = $this->normalizeArrayInput('keep_images');
         }
 
@@ -62,6 +62,7 @@ class UpdateExamRequest extends FormRequest
             'images.*' => ['image', 'max:5120'],
             'keep_images' => ['sometimes', 'array'],
             'keep_images.*' => ['string', 'max:2048'],
+            'keep_images_updated' => ['sometimes', 'boolean'],
             'status' => ['sometimes', 'boolean'],
             'exam_status' => ['sometimes', 'required', 'string', Rule::in(Exam::EXAM_STATUSES)],
         ];
