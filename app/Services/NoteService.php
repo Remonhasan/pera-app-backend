@@ -115,17 +115,33 @@ class NoteService
             $payload['updated_by'] = $actorId;
         }
 
-        if (array_key_exists('keep_images', $validated) || $imageFiles !== []) {
+        if (
+            array_key_exists('keep_images', $validated)
+            || ($validated['keep_images_updated'] ?? false)
+            || $imageFiles !== []
+        ) {
+            $keepPaths = array_key_exists('keep_images', $validated)
+                ? $validated['keep_images']
+                : ($note->images ?? []);
+
             $payload['images'] = $this->mergeStoredFiles(
-                $validated['keep_images'] ?? [],
+                $keepPaths,
                 $imageFiles,
                 $note->images ?? [],
             );
         }
 
-        if (array_key_exists('keep_files', $validated) || $documentFiles !== []) {
+        if (
+            array_key_exists('keep_files', $validated)
+            || ($validated['keep_files_updated'] ?? false)
+            || $documentFiles !== []
+        ) {
+            $keepPaths = array_key_exists('keep_files', $validated)
+                ? $validated['keep_files']
+                : ($note->files ?? []);
+
             $payload['files'] = $this->mergeStoredFiles(
-                $validated['keep_files'] ?? [],
+                $keepPaths,
                 $documentFiles,
                 $note->files ?? [],
             );

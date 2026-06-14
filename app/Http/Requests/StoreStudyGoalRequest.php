@@ -30,8 +30,22 @@ class StoreStudyGoalRequest extends FormRequest
         }
 
         foreach (['date_from', 'date_to', 'extended_date'] as $key) {
-            if ($this->has($key) && $this->input($key) === '') {
+            if (! $this->has($key)) {
+                continue;
+            }
+
+            $value = $this->input($key);
+
+            if ($value === null || $value === '') {
                 $merge[$key] = null;
+
+                continue;
+            }
+
+            try {
+                $merge[$key] = \Carbon\Carbon::parse($value)->toDateString();
+            } catch (\Throwable) {
+                // Leave the original value so the date rule can fail validation.
             }
         }
 

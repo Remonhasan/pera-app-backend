@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\StudyGoal;
 use App\Models\User;
 use App\Repositories\Contracts\StudyGoalRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class StudyGoalService
@@ -127,9 +128,9 @@ class StudyGoalService
             'subject_id' => (int) $validated['subject_id'],
             'topic_id' => isset($validated['topic_id']) ? (int) $validated['topic_id'] : null,
             'job_id' => isset($validated['job_id']) ? (int) $validated['job_id'] : null,
-            'date_from' => $validated['date_from'] ?? null,
-            'date_to' => $validated['date_to'] ?? null,
-            'extended_date' => $validated['extended_date'] ?? null,
+            'date_from' => $this->normalizeDate($validated['date_from'] ?? null),
+            'date_to' => $this->normalizeDate($validated['date_to'] ?? null),
+            'extended_date' => $this->normalizeDate($validated['extended_date'] ?? null),
             'status' => $validated['status'] ?? true,
             'study_goal_status' => $validated['study_goal_status'] ?? StudyGoal::STATUS_PENDING,
         ];
@@ -166,13 +167,13 @@ class StudyGoalService
                 : null;
         }
         if (array_key_exists('date_from', $validated)) {
-            $payload['date_from'] = $validated['date_from'];
+            $payload['date_from'] = $this->normalizeDate($validated['date_from']);
         }
         if (array_key_exists('date_to', $validated)) {
-            $payload['date_to'] = $validated['date_to'];
+            $payload['date_to'] = $this->normalizeDate($validated['date_to']);
         }
         if (array_key_exists('extended_date', $validated)) {
-            $payload['extended_date'] = $validated['extended_date'];
+            $payload['extended_date'] = $this->normalizeDate($validated['extended_date']);
         }
         if (array_key_exists('status', $validated)) {
             $payload['status'] = (bool) $validated['status'];
@@ -191,5 +192,14 @@ class StudyGoalService
     public function deleteStudyGoal(StudyGoal $studyGoal): bool
     {
         return $this->studyGoals->delete($studyGoal);
+    }
+
+    private function normalizeDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return Carbon::parse($value)->toDateString();
     }
 }

@@ -37,9 +37,9 @@ class StudyGoal extends Model
     protected function casts(): array
     {
         return [
-            'date_from' => 'date',
-            'date_to' => 'date',
-            'extended_date' => 'date',
+            'date_from' => 'date:Y-m-d',
+            'date_to' => 'date:Y-m-d',
+            'extended_date' => 'date:Y-m-d',
             'status' => 'boolean',
         ];
     }

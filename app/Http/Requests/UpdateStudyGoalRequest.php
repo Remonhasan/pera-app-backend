@@ -5,9 +5,11 @@ namespace App\Http\Requests;
 use App\Models\StudyGoal;
 use App\Models\Topic;
 use App\Models\User;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateStudyGoalRequest extends FormRequest
 {
@@ -31,14 +33,53 @@ class UpdateStudyGoalRequest extends FormRequest
         }
 
         foreach (['date_from', 'date_to', 'extended_date'] as $key) {
-            if ($this->has($key) && $this->input($key) === '') {
+            if (! $this->has($key)) {
+                continue;
+            }
+
+            $value = $this->input($key);
+
+            if ($value === null || $value === '') {
                 $merge[$key] = null;
+
+                continue;
+            }
+
+            try {
+                $merge[$key] = Carbon::parse($value)->toDateString();
+            } catch (\Throwable) {
+                // Leave the original value so the date rule can fail validation.
             }
         }
 
         if ($merge !== []) {
             $this->merge($merge);
         }
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $studyGoal = $this->route('study_goal');
+
+            if (! $studyGoal instanceof StudyGoal) {
+                return;
+            }
+
+            $dateFrom = $this->has('date_from')
+                ? $this->input('date_from')
+                : $studyGoal->date_from?->format('Y-m-d');
+            $dateTo = $this->has('date_to')
+                ? $this->input('date_to')
+                : $studyGoal->date_to?->format('Y-m-d');
+
+            if ($dateFrom !== null && $dateTo !== null && $dateTo < $dateFrom) {
+                $validator->errors()->add(
+                    'date_to',
+                    'The date to field must be a date after or equal to date from.',
+                );
+            }
+        });
     }
 
     /** @return array<string, mixed> */
@@ -50,7 +91,7 @@ class UpdateStudyGoalRequest extends FormRequest
             'topic_id' => ['sometimes', 'nullable', 'integer', Rule::exists('topics', 'id'), $this->topicBelongsToSubjectRule()],
             'job_id' => ['sometimes', 'nullable', 'integer', Rule::exists('job_types', 'id')],
             'date_from' => ['sometimes', 'nullable', 'date'],
-            'date_to' => ['sometimes', 'nullable', 'date', 'after_or_equal:date_from'],
+            'date_to' => ['sometimes', 'nullable', 'date'],
             'extended_date' => ['sometimes', 'nullable', 'date'],
             'status' => ['sometimes', 'boolean'],
             'study_goal_status' => ['sometimes', 'required', 'string', Rule::in(StudyGoal::STUDY_GOAL_STATUSES)],
@@ -83,6 +124,11 @@ class UpdateStudyGoalRequest extends FormRequest
             }
 
             $subjectId = $this->input('subject_id');
+            if ($subjectId === null) {
+                $studyGoal = $this->route('study_goal');
+                $subjectId = $studyGoal instanceof StudyGoal ? $studyGoal->subject_id : null;
+            }
+
             if ($subjectId === null) {
                 return;
             }

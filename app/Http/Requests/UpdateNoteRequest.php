@@ -28,13 +28,13 @@ class UpdateNoteRequest extends FormRequest
         if ($this->has('topic_id') && $this->input('topic_id') === '') {
             $merge['topic_id'] = null;
         }
-        if ($this->has('job_ids')) {
+        if ($this->inputKeyExists('job_ids')) {
             $merge['job_ids'] = $this->normalizeArrayInput('job_ids');
         }
-        if ($this->has('keep_images')) {
+        if ($this->inputKeyExists('keep_images') || $this->boolean('keep_images_updated')) {
             $merge['keep_images'] = $this->normalizeArrayInput('keep_images');
         }
-        if ($this->has('keep_files')) {
+        if ($this->inputKeyExists('keep_files') || $this->boolean('keep_files_updated')) {
             $merge['keep_files'] = $this->normalizeArrayInput('keep_files');
         }
         if ($this->has('drive_link')) {
@@ -56,10 +56,12 @@ class UpdateNoteRequest extends FormRequest
             'topic_id' => ['sometimes', 'nullable', 'integer', Rule::exists('topics', 'id'), $this->topicBelongsToSubjectRule()],
             'job_ids' => ['sometimes', 'nullable', 'array'],
             'job_ids.*' => ['integer', Rule::exists('job_types', 'id')],
-            'keep_images' => ['sometimes', 'array'],
+            'keep_images' => ['nullable', 'array'],
             'keep_images.*' => ['string', 'max:500'],
-            'keep_files' => ['sometimes', 'array'],
+            'keep_images_updated' => ['sometimes', 'boolean'],
+            'keep_files' => ['nullable', 'array'],
             'keep_files.*' => ['string', 'max:500'],
+            'keep_files_updated' => ['sometimes', 'boolean'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:5120'],
             'files' => ['nullable', 'array'],
@@ -78,6 +80,11 @@ class UpdateNoteRequest extends FormRequest
         }
 
         return is_array($value) ? $value : [$value];
+    }
+
+    private function inputKeyExists(string $key): bool
+    {
+        return array_key_exists($key, $this->all());
     }
 
     private function memberUserRule(): Closure

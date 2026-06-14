@@ -194,7 +194,11 @@ class ExamService
             );
         }
 
-        if (array_key_exists('keep_images', $validated) || $imageFiles !== []) {
+        if (
+            array_key_exists('keep_images', $validated)
+            || ($validated['keep_images_updated'] ?? false)
+            || $imageFiles !== []
+        ) {
             $keepPaths = array_key_exists('keep_images', $validated)
                 ? $validated['keep_images']
                 : ($exam->images ?? []);

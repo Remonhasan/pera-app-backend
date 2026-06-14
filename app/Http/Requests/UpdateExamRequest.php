@@ -31,7 +31,7 @@ class UpdateExamRequest extends FormRequest
             }
         }
 
-        if ($this->boolean('keep_images_updated') || $this->has('keep_images')) {
+        if ($this->inputKeyExists('keep_images') || $this->boolean('keep_images_updated')) {
             $merge['keep_images'] = $this->normalizeArrayInput('keep_images');
         }
 
@@ -60,7 +60,7 @@ class UpdateExamRequest extends FormRequest
             'keep_admit_card_file' => ['sometimes', 'nullable', 'string', 'max:2048'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:5120'],
-            'keep_images' => ['sometimes', 'array'],
+            'keep_images' => ['nullable', 'array'],
             'keep_images.*' => ['string', 'max:2048'],
             'keep_images_updated' => ['sometimes', 'boolean'],
             'status' => ['sometimes', 'boolean'],
@@ -77,5 +77,10 @@ class UpdateExamRequest extends FormRequest
         }
 
         return is_array($value) ? $value : [$value];
+    }
+
+    private function inputKeyExists(string $key): bool
+    {
+        return array_key_exists($key, $this->all());
     }
 }

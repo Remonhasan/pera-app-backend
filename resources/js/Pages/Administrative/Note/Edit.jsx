@@ -171,27 +171,42 @@ export default function Edit({ note, members, subjects, topics, jobTypes }) {
             return;
         }
 
-        const hasNewUploads =
-            (data.images || []).some((f) => f instanceof File) ||
-            (data.files || []).some((f) => f instanceof File);
+        const hasNewImageUploads = (data.images || []).some((f) => f instanceof File);
+        const hasNewFileUploads = (data.files || []).some((f) => f instanceof File);
+        const hasNewUploads = hasNewImageUploads || hasNewFileUploads;
+        const hasImageChanges =
+            JSON.stringify(data.keep_images ?? []) !==
+            JSON.stringify(note.images ?? []);
+        const hasFileChanges =
+            JSON.stringify(data.keep_files ?? []) !==
+            JSON.stringify(note.files ?? []);
+        const useFormData = hasNewUploads;
 
         transform((formData) => {
             const out = { ...formData };
-            if (hasNewUploads) {
+            if (useFormData) {
                 out._method = "put";
+                if (hasImageChanges || hasNewImageUploads) {
+                    out.keep_images_updated = true;
+                    out.keep_images = formData.keep_images ?? [];
+                }
+                if (hasFileChanges || hasNewFileUploads) {
+                    out.keep_files_updated = true;
+                    out.keep_files = formData.keep_files ?? [];
+                }
             }
             return out;
         });
 
         const visitOptions = {
-            forceFormData: hasNewUploads,
+            forceFormData: useFormData,
             preserveScroll: true,
             onSuccess: () => setOpen(false),
             onFinish: () => transform((d) => d),
         };
 
         const url = route("administrative.note.update", note.id);
-        if (hasNewUploads) {
+        if (useFormData) {
             post(url, visitOptions);
         } else {
             put(url, visitOptions);
