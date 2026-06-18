@@ -5,7 +5,17 @@ import {
     ExclamationCircleFilled,
 } from "@ant-design/icons";
 import { Head, usePage, useForm } from "@inertiajs/react";
-import { Button, Col, Input, Row, Table, Modal, Space, Tag, Typography } from "antd";
+import {
+    Button,
+    Col,
+    Input,
+    Row,
+    Table,
+    Modal,
+    Space,
+    Tag,
+    Typography,
+} from "antd";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import AppLayout from "../../../components/layouts/AppLayout";
@@ -49,8 +59,13 @@ function formatPrice(val) {
     });
 }
 
-function monthlyTarget(amount) {
-    return (Number(amount) || 0) * 30;
+// function monthlyTarget(amount) {
+//     return (Number(amount) || 0) * 30;
+// }
+
+function monthlyTarget(amount, month, year) {
+    const days = daysInMonth(month, year);
+    return (Number(amount) || 0) * days;
 }
 
 function daysInMonth(month, year) {
@@ -64,7 +79,7 @@ function daysInMonth(month, year) {
 
 function amountPerDay(amount, month, year) {
     const days = daysInMonth(month, year);
-    return days > 0 ? monthlyTarget(amount) / days : 0;
+    return days > 0 ? monthlyTarget(amount, month, year) / days : 0;
 }
 
 export default function Index() {
@@ -105,7 +120,9 @@ export default function Index() {
             okType: "danger",
             cancelText: t("common.no"),
             onOk() {
-                destroy(route("administrative.expense-target.destroy", record.id));
+                destroy(
+                    route("administrative.expense-target.destroy", record.id),
+                );
             },
         });
     };
@@ -128,20 +145,22 @@ export default function Index() {
     };
 
     const filtered = (expenseTargets || []).filter(matchesSearch);
+
     const totalAmount = useMemo(
         () =>
             filtered.reduce(
                 (sum, item) =>
-                    sum +
-                    amountPerDay(item.amount, item.month, item.year),
+                    sum + amountPerDay(item.amount, item.month, item.year),
                 0,
             ),
         [filtered],
     );
+
     const totalBudget = useMemo(
         () =>
             filtered.reduce(
-                (sum, item) => sum + monthlyTarget(item.amount),
+                (sum, item) =>
+                    sum + monthlyTarget(item.amount, item.month, item.year),
                 0,
             ),
         [filtered],
@@ -208,7 +227,9 @@ export default function Index() {
             key: "amount",
             width: 140,
             render: (_, record) =>
-                formatPrice(amountPerDay(record.amount, record.month, record.year)),
+                formatPrice(
+                    amountPerDay(record.amount, record.month, record.year),
+                ),
             sorter: (a, b) =>
                 amountPerDay(a.amount, a.month, a.year) -
                 amountPerDay(b.amount, b.month, b.year),
@@ -221,12 +242,13 @@ export default function Index() {
             title: t("expenseTarget.colBudget30Days"),
             key: "budget_30_days",
             width: 160,
-            render: (_, record) => formatPrice(monthlyTarget(record.amount)),
-            sorter: (a, b) => monthlyTarget(a.amount) - monthlyTarget(b.amount),
-            sortOrder:
-                state.sortedInfo?.columnKey === "budget_30_days"
-                    ? state.sortedInfo.order
-                    : null,
+            render: (_, record) =>
+                formatPrice(
+                    monthlyTarget(record.amount, record.month, record.year),
+                ),
+            sorter: (a, b) =>
+                monthlyTarget(a.amount, a.month, a.year) -
+                monthlyTarget(b.amount, b.month, b.year),
         },
         {
             title: t("common.status"),
@@ -313,9 +335,17 @@ export default function Index() {
                                 className="search-input"
                             />
                         </Col>
-                        <Col xs={24} sm={12} md={6} style={{ textAlign: "right" }}>
+                        <Col
+                            xs={24}
+                            sm={12}
+                            md={6}
+                            style={{ textAlign: "right" }}
+                        >
                             {hasPermission("expense_target_create") && (
-                                <Create budgetTypes={budgetTypes} members={members} />
+                                <Create
+                                    budgetTypes={budgetTypes}
+                                    members={members}
+                                />
                             )}
                         </Col>
                     </Row>
@@ -347,7 +377,9 @@ export default function Index() {
                             pageSizeOptions: ["10", "20", "50", "100"],
                         }}
                         rowClassName={(_, index) =>
-                            index % 2 === 0 ? "table-row-light" : "table-row-dark"
+                            index % 2 === 0
+                                ? "table-row-light"
+                                : "table-row-dark"
                         }
                         summary={() => (
                             <Table.Summary fixed>
@@ -363,8 +395,15 @@ export default function Index() {
                                                 2,
                                             )}
                                         </Text>
-                                        <div style={{ fontSize: 12, color: "#8c8c8c" }}>
-                                            {t("expenseTarget.summaryTotalAmount")}
+                                        <div
+                                            style={{
+                                                fontSize: 12,
+                                                color: "#8c8c8c",
+                                            }}
+                                        >
+                                            {t(
+                                                "expenseTarget.summaryTotalAmount",
+                                            )}
                                         </div>
                                     </Table.Summary.Cell>
                                     <Table.Summary.Cell index={5} align="right">
@@ -375,7 +414,12 @@ export default function Index() {
                                                 2,
                                             )}
                                         </Text>
-                                        <div style={{ fontSize: 12, color: "#8c8c8c" }}>
+                                        <div
+                                            style={{
+                                                fontSize: 12,
+                                                color: "#8c8c8c",
+                                            }}
+                                        >
                                             {t("expenseTarget.summaryBudget")}
                                         </div>
                                     </Table.Summary.Cell>
